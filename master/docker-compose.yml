@@ -1,0 +1,37 @@
+version: '2.1'
+services:
+  redis-master:
+    container_name: "redis-master_{{.Name.Cluster}}_{{.Name.Instance}}"
+    image:          "{{.Docker.Registry}}/redis-master:v4.0"
+    command:        "--bind {{.HostIP}} --port 6379 --stop-writes-on-bgsave-error no"
+    ports:
+        - "6379:6379"
+    volumes:
+      - /data/redis/data:/data
+    depends_on:
+      - redis-sentinel
+    network_mode:   "host"
+    restart:        "always"
+    logging:
+      driver:       "json-file"
+      options:
+        max-size:   "200m"
+        max-file:   "5"
+
+  redis-sentinel:
+    container_name: "redis-sentinel_{{.Name.Cluster}}_{{.Name.Instance}}"
+    image:          "{{.Docker.Registry}}/redis-sentinel:v4.0"
+    command:        "--bind {{.HostIP}} --port 26379"
+    environment:
+      - REDIS_MASTER={{.Redis.Master}}
+      - SENTINEL_DOWN_AFTER={{.Redis.SentinelDownAfter}}
+      - SENTINEL_FAILOVER={{.Redis.SentinelFailover}}
+      - SENTINEL_QUORUM={{.Redis.SentinelQuorum}}
+      - SENTINEL_PARALLEL_SYNCS={{.Redis.SentinelParallelSyncs}}
+    network_mode:   "host"
+    restart:        "always"
+    logging:
+      driver:       "json-file"
+      options:
+        max-size:   "200m"
+        max-file:   "5"
